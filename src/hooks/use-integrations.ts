@@ -13,15 +13,17 @@ type UseIntegrationsState = {
   error: string | null
 }
 
-export function useIntegrations(): UseIntegrationsState {
+export function useIntegrations(searchTerm: string): UseIntegrationsState {
+  const normalizedSearch = searchTerm.trim()
+
   const servicesQuery = useQuery<IntegrationService[], Error>({
     queryKey: ["integration-services"],
     queryFn: fetchIntegrationServices,
   })
 
   const connectionsQuery = useQuery<IntegrationConnection[], Error>({
-    queryKey: ["integration-connections"],
-    queryFn: fetchIntegrationConnections,
+    queryKey: ["integration-connections", normalizedSearch],
+    queryFn: () => fetchIntegrationConnections({ search: normalizedSearch }),
   })
 
   const error = servicesQuery.error ?? connectionsQuery.error
