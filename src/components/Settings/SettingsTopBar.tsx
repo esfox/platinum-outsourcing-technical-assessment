@@ -26,7 +26,7 @@ export function SettingsTopBar() {
   }, [query, tenants]);
 
   return (
-    <header className="sticky top-0 w-full grid grid-cols-[auto_1fr_auto] h-16 items-center border-b-2 bg-white">
+    <header className="sticky top-0 grid grid-cols-[auto_1fr_auto] h-16 items-center border-b-2 bg-white">
       <div className="w-64 ps-6">
         <Popover>
           <PopoverTrigger asChild>
