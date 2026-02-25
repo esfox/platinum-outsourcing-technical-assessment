@@ -1,5 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMemo, useState } from 'react';
 
@@ -96,9 +103,18 @@ export function SettingsTopBar() {
         <Button variant="secondary" size="icon" className="rounded-full" aria-label="Search">
           <i className="fa-solid fa-question" />
         </Button>
-        <Button className="bg-blue hover:bg-blue/90" size="icon">
-          {userInitials}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-blue hover:bg-blue/90" size="icon" aria-label="User menu">
+              {userInitials}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem>Account Settings</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Sign Out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
