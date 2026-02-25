@@ -1,37 +1,44 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery } from '@tanstack/react-query';
 
-import type { IntegrationConnection, IntegrationService } from "@/services/integrations"
-import {
-  fetchIntegrationConnections,
-  fetchIntegrationServices,
-} from "@/services/integrations"
+import type { IntegrationConnection, IntegrationService } from '@/services/integrations';
+import { fetchIntegrationConnections, fetchIntegrationServices } from '@/services/integrations';
 
 type UseIntegrationsState = {
-  services: IntegrationService[]
-  connections: IntegrationConnection[]
-  isLoading: boolean
-  error: string | null
-}
+  services: IntegrationService[];
+  connections: IntegrationConnection[];
+  total: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  error: string | null;
+};
 
-export function useIntegrations(searchTerm: string): UseIntegrationsState {
-  const normalizedSearch = searchTerm.trim()
+export function useIntegrations(searchTerm: string, page: number, pageSize: number): UseIntegrationsState {
+  const normalizedSearch = searchTerm.trim();
 
   const servicesQuery = useQuery<IntegrationService[], Error>({
-    queryKey: ["integration-services"],
+    queryKey: ['integration-services'],
     queryFn: fetchIntegrationServices,
-  })
+  });
 
-  const connectionsQuery = useQuery<IntegrationConnection[], Error>({
-    queryKey: ["integration-connections", normalizedSearch],
-    queryFn: () => fetchIntegrationConnections({ search: normalizedSearch }),
-  })
+  const connectionsQuery = useQuery<{ items: IntegrationConnection[]; total: number }, Error>({
+    queryKey: ['integration-connections', normalizedSearch, page, pageSize],
+    queryFn: () =>
+      fetchIntegrationConnections({
+        search: normalizedSearch,
+        page,
+        pageSize,
+      }),
+    placeholderData: (previous) => previous,
+  });
 
-  const error = servicesQuery.error ?? connectionsQuery.error
+  const error = servicesQuery.error ?? connectionsQuery.error;
 
   return {
     services: servicesQuery.data ?? [],
-    connections: connectionsQuery.data ?? [],
-    isLoading: servicesQuery.isLoading || connectionsQuery.isLoading,
+    connections: connectionsQuery.data?.items ?? [],
+    total: connectionsQuery.data?.total ?? 0,
+    isLoading: servicesQuery.isFetching || connectionsQuery.isFetching,
+    isFetching: connectionsQuery.isFetching,
     error: error ? error.message : null,
-  }
+  };
 }

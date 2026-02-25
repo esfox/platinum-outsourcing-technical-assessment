@@ -15,25 +15,40 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/settings/integrations')({
+  validateSearch: (search) => {
+    const rawPage = search.page;
+    const pageNumber =
+      typeof rawPage === 'number' ? rawPage : typeof rawPage === 'string' ? Number.parseInt(rawPage, 10) : 1;
+    const rawQuery = search.q;
+
+    return {
+      page: Number.isFinite(pageNumber) && pageNumber > 0 ? pageNumber : 1,
+      q: typeof rawQuery === 'string' ? rawQuery : '',
+    };
+  },
   component: IntegrationsPage,
 });
 
 function IntegrationsPage() {
   const itemsPerPage = 10;
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
-  const { services, connections, isLoading } = useIntegrations(searchTerm);
+  const navigate = Route.useNavigate();
+  const { page, q } = Route.useSearch();
+  type SearchParams = ReturnType<typeof Route.useSearch>;
+  const searchTerm = q ?? '';
+  const currentPage = page ?? 1;
+  const debouncedSearch = useDebouncedValue(searchTerm, 500);
+  const { services, connections, isLoading, total } = useIntegrations(debouncedSearch, currentPage, itemsPerPage);
   const [editTarget, setEditTarget] = useState<(typeof connections)[number] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<(typeof connections)[number] | null>(null);
 
-  const totalPages = Math.max(1, Math.ceil(connections.length / itemsPerPage));
-  const startIndex = (page - 1) * itemsPerPage;
-  const pageItems = connections.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+  const pageItems = connections;
 
   const getPageItems = () => {
     if (totalPages <= 7) {
@@ -41,27 +56,41 @@ function IntegrationsPage() {
     }
 
     const pages: Array<number | 'ellipsis'> = [];
-    const left = Math.max(2, page - 1);
-    const right = Math.min(totalPages - 1, page + 1);
+    const lastPage = totalPages;
 
-    pages.push(1);
-    if (left > 2) {
-      pages.push('ellipsis');
+    if (currentPage <= 3) {
+      pages.push(1, 2, 3, 4, 5, 'ellipsis', lastPage);
+      return pages;
     }
-    for (let current = left; current <= right; current += 1) {
-      pages.push(current);
+
+    if (currentPage >= totalPages - 2) {
+      pages.push(1, 'ellipsis', lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1, lastPage);
+      return pages;
     }
-    if (right < totalPages - 1) {
-      pages.push('ellipsis');
-    }
-    pages.push(totalPages);
+
+    pages.push(
+      1,
+      'ellipsis',
+      currentPage - 2,
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      currentPage + 2,
+      'ellipsis',
+      lastPage,
+    );
 
     return pages;
   };
 
   useEffect(() => {
-    setPage(1);
-  }, [connections.length, searchTerm]);
+    if (!isLoading && currentPage > totalPages) {
+      navigate({
+        search: (prev: SearchParams) => ({ ...prev, page: totalPages }),
+        replace: true,
+      });
+    }
+  }, [currentPage, isLoading, navigate, totalPages]);
 
   const handleEditClick = (connection: (typeof connections)[number]) => {
     setEditTarget(connection);
@@ -115,7 +144,11 @@ function IntegrationsPage() {
             placeholder="Integration or Name"
             className="bg-white pl-9 h-10"
             value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={(event) =>
+              navigate({
+                search: (prev: SearchParams) => ({ ...prev, q: event.target.value, page: 1 }),
+              })
+            }
           />
         </div>
         <div className="rounded-lg border bg-white">
@@ -139,7 +172,7 @@ function IntegrationsPage() {
                   <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                     <div className="flex items-center justify-center gap-3">
                       <Spinner className="h-5 w-5" />
-                      <span>Loading integrations...</span>
+                      <span>Loading connections...</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -222,8 +255,12 @@ function IntegrationsPage() {
             <Button
               variant="outline"
               className="text-foreground gap-1 font-semibold"
-              disabled={isLoading || page === 1}
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={isLoading || currentPage === 1}
+              onClick={() =>
+                navigate({
+                  search: (prev: SearchParams) => ({ ...prev, page: Math.max(1, currentPage - 1) }),
+                })
+              }
             >
               <i className="fa-solid fa-arrow-left text-xs mt-0.5"></i>
               Previous
@@ -236,10 +273,14 @@ function IntegrationsPage() {
                 ) : (
                   <Button
                     key={item}
-                    variant={item === page ? 'secondary' : 'ghost'}
+                    variant={item === currentPage ? 'secondary' : 'ghost'}
                     size="icon-sm"
                     disabled={isLoading}
-                    onClick={() => setPage(item)}
+                    onClick={() =>
+                      navigate({
+                        search: (prev: SearchParams) => ({ ...prev, page: item }),
+                      })
+                    }
                   >
                     {item}
                   </Button>
@@ -249,8 +290,12 @@ function IntegrationsPage() {
             <Button
               variant="outline"
               className="text-foreground gap-1 font-semibold"
-              disabled={isLoading || page === totalPages}
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={isLoading || currentPage === totalPages}
+              onClick={() =>
+                navigate({
+                  search: (prev: SearchParams) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) }),
+                })
+              }
             >
               Next
               <i className="fa-solid fa-arrow-right text-xs mt-0.5"></i>

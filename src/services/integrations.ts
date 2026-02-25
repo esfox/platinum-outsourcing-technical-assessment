@@ -1065,25 +1065,30 @@ export async function fetchIntegrationServices(): Promise<IntegrationService[]> 
 
 type FetchConnectionsOptions = {
   search?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 export async function fetchIntegrationConnections(
   options: FetchConnectionsOptions = {},
-): Promise<IntegrationConnection[]> {
+): Promise<{ items: IntegrationConnection[]; total: number }> {
   // Simulate loading state
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   const query = options.search?.trim().toLowerCase();
-  if (!query) {
-    return Promise.resolve(integrationConnections);
-  }
+  const filtered = query
+    ? integrationConnections.filter(
+        (connection) =>
+          connection.name.toLowerCase().includes(query) ||
+          connection.integrationName.toLowerCase().includes(query) ||
+          connection.entityGroup.toLowerCase().includes(query),
+      )
+    : integrationConnections;
 
-  const filtered = integrationConnections.filter(
-    (connection) =>
-      connection.name.toLowerCase().includes(query) ||
-      connection.integrationName.toLowerCase().includes(query) ||
-      connection.entityGroup.toLowerCase().includes(query),
-  );
+  const pageSize = options.pageSize ?? filtered.length;
+  const page = options.page ?? 1;
+  const startIndex = (page - 1) * pageSize;
+  const items = filtered.slice(startIndex, startIndex + pageSize);
 
-  return Promise.resolve(filtered);
+  return Promise.resolve({ items, total: filtered.length });
 }
