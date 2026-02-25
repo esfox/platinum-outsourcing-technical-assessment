@@ -15,15 +15,17 @@ This serves as my submission for my technical assessment for Platinum Outsourcin
 
 ### Setup
 
-- Install dependencies
+- Install dependencies.
 ```
 pnpm i
 ```
 
-- Run the application
+- Run the application.
 ```
 pnpm dev
 ```
 
-- Navigate to `/settings/integrations` to view the integrations page
+- Open the local dev server, `http://localhost:4220`, in the browser.
+
+- Navigate to `/settings/integrations` or click the settings icon on the bottom left to view the integrations page.
 

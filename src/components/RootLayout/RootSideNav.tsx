@@ -47,41 +47,16 @@ export function RootSideNav() {
         ))}
       </div>
       <div className="w-full h-full flex flex-col justify-center">
-        <Link to="#" className="text-center hover:bg-[color:var(--accent)] py-3">
+        <Link
+          to="/settings/integrations"
+          activeOptions={{ exact: false }}
+          className={cn('block text-center py-3 hover:bg-accent hover:text-white')}
+          activeProps={{ className: 'text-accent' }}
+        >
           <i className="fa-solid fa-gear text-2xl" />
           <p className="text-xs mt-1">Settings</p>
         </Link>
       </div>
     </div>
-    // <div className="w-64 space-y-6 px-4 py-5">
-    //   <AppSidebarSection
-    //     title="Organisation"
-    //     items={[
-    //       { label: 'Manage', icon: 'fa-house' },
-    //       { label: 'Users', icon: 'fa-users' },
-    //       { label: 'Tags', icon: 'fa-tags' },
-    //       { label: 'Integrations', icon: 'fa-plug', active: true },
-    //     ]}
-    //   />
-    //     <AppSidebarSection
-    //       title="Utilities"
-    //     items={[
-    //       { label: 'Configuration', icon: 'fa-gear' },
-    //       { label: 'Hierarchy', icon: 'fa-sitemap' },
-    //       { label: 'Assets', icon: 'fa-layer-group' },
-    //     ]}
-    //   />
-    //       <AppSidebarSection
-    //         title="Carbon"
-    //         items={[
-    //           { label: 'Configuration', icon: 'fa-gear' },
-    //           { label: 'Hierarchy', icon: 'fa-sitemap' },
-    //           { label: 'Inventory Items', icon: 'fa-boxes-stacked' },
-    //           { label: 'Emission Factors', icon: 'fa-fire-flame-curved' },
-    //           { label: 'Snapshots', icon: 'fa-camera' },
-    //         ]}
-    //       />
-    //         <AppSidebarSection title="Displays" items={[{ label: 'Manage', icon: 'fa-clipboard-list' }]} />
-    // </div>
   );
 }
